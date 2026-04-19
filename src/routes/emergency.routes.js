@@ -1,7 +1,7 @@
 import express from 'express';
 import axios from 'axios';
 import { protect } from '../middleware/auth.middleware.js';
-
+//import { sendEmergencySMS } from '../services/sms.service.js';
 const router = express.Router();
 const DOTNET = process.env.DOTNET_API_URL;
 const AI = process.env.AI_API_URL;
@@ -157,19 +157,69 @@ router.get('/self-care', protect, async (req, res) => {
 });
 
 // POST /api/emergency/send-message
-router.post('/send-message', protect, async (req, res) => {
+// POST /api/emergency/send-sms-all
+router.post('/send-sms-all', protect, async (req, res) => {
   try {
-    const { contactId, message } = req.body;
-    if (!contactId || !message)
-      return res.status(400).json({ message: 'Contact ID and message are required' });
-    const { data: emergencyData } = await axios.get(`${DOTNET}/api/emergency/${req.user.id}`, h(getToken(req)));
-    const contact = emergencyData.contacts?.find((c) => c.id === contactId);
-    if (!contact) return res.status(404).json({ message: 'Contact not found' });
-    const { data } = await axios.post(`${DOTNET}/api/emergency/${req.user.id}/send-message`, {
-      contactPhone: contact.phone, contactName: contact.name, message, patientName: emergencyData.fullName,
-    }, h(getToken(req)));
-    res.status(200).json({ message: 'Message sent successfully', data });
-  } catch (error) { err(res, error); }
+    const token = getToken(req);
+
+    // 1) هات emergency contacts من .NET
+    const { data } = await axios.get(
+      `${DOTNET}/api/emergency/${req.user.id}`,
+      h(token)
+    );
+
+    const contacts = data.contacts;
+
+    if (!contacts?.length)
+      return res.status(400).json({ message: 'No contacts found' });
+
+    // 2) ابعت لكل واحد
+    const results = [];
+
+    for (let c of contacts) {
+      if (!c.phone) {
+        results.push({
+          phone: null,
+          success: false,
+          error: "No phone number"
+        });
+        continue;
+      }
+
+      try {
+        const sms = await sendSMS(
+          c.phone,
+          `🚨 Emergency! ${data.fullName} needs help NOW!`
+        );
+
+        results.push({
+          phone: c.phone,
+          success: true,
+          sid: sms.sid,
+          status: sms.status,
+        });
+
+      } catch (error) {
+        results.push({
+          phone: c.phone,
+          success: false,
+          error: error.message,
+        });
+      }
+    }
+
+    // 3) response محترم
+    res.status(200).json({
+      message: "SMS process completed",
+      total: contacts.length,
+      successCount: results.filter(r => r.success).length,
+      failedCount: results.filter(r => !r.success).length,
+      results,
+    });
+
+  } catch (error) {
+    err(res, error);
+  }
 });
 
 // POST /api/emergency/ai-assistant

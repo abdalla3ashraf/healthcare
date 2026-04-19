@@ -12,7 +12,7 @@ const err = (res, error) => res.status(error.response?.status || 500).json({
 
 // ─── BLOOD PRESSURE ───────────────────────────────────────
 
-// GET /api/measurements/blood-pressure
+// GET /api/delete/blood-pressure
 router.get('/blood-pressure', protect, async (req, res) => {
   try {
     const { data } = await axios.get(`${DOTNET}/api/Users/measurements/BloodPressure`, h(getToken(req)));
@@ -40,13 +40,27 @@ router.post('/blood-pressure', protect, async (req, res) => {
 });
 
 // DELETE /api/measurements/blood-pressure/:date
-router.delete('/blood-pressure/:date', protect, async (req, res) => {
+// router.delete('/blood-pressure/:date', protect, async (req, res) => {
+//   try {
+//     await axios.delete(`${DOTNET}/api/Users/measurements/BloodPressure/${req.params.date}`, h(getToken(req)));
+//     res.status(200).json({ message: 'Record deleted successfully' });
+//   } catch (error) { err(res, error); }
+// });
+// DELETE /api/measurements/:id
+router.delete('/:id', protect, async (req, res) => {
   try {
-    await axios.delete(`${DOTNET}/api/Users/measurements/BloodPressure/${req.params.date}`, h(getToken(req)));
-    res.status(200).json({ message: 'Record deleted successfully' });
-  } catch (error) { err(res, error); }
-});
+    const { id } = req.params;
 
+    await axios.delete(
+      `${DOTNET}/api/Users/delete-measurement/${id}`,
+      h(getToken(req))
+    );
+
+    res.status(200).json({ message: 'Measurement deleted successfully' });
+  } catch (error) {
+    err(res, error);
+  }
+});
 // ─── DIABETES ─────────────────────────────────────────────
 
 // GET /api/measurements/diabetes
