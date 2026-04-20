@@ -28,7 +28,7 @@ router.get('/profile', protect, async (req, res) => {
 //     });
 //   }
   }catch (error) {
-  console.log("🔥 FULL ERROR:", error.response?.data || error.message);
+  console.log(" FULL ERROR:", error.response?.data || error.message);
   console.log("STATUS:", error.response?.status);
 
   return res.status(error.response?.status || 500).json({
@@ -40,9 +40,9 @@ router.get('/profile', protect, async (req, res) => {
 // PUT /api/users/profile
 router.put('/profile', protect, async (req, res) => {
   try {
-const { emailAddress, nationalId, birthDate, city, gender, phoneNumber } = req.body;
+const { emailAddress, nationalId, birthDate, city, gender, phoneNumber ,} = req.body;
 
-    if (!nationalId || !birthDate || !city || !gender || !phoneNumber)
+    if (!nationalId || !birthDate || !city || !gender || !phoneNumber )
       return res.status(400).json({ message: 'All required fields must be filled' });
     if (!/^\d{14}$/.test(nationalId))
       return res.status(400).json({ message: 'National ID must be exactly 14 digits' });

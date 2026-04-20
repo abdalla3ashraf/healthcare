@@ -10,13 +10,19 @@ const err = (res, error) => res.status(error.response?.status || 500).json({
   message: error.response?.data?.message || error.message || 'Server error',
 });
 
+const cleanMeasurement = (m) => {
+  if (!m) return null;
+  const { user, ...rest } = m;
+  return rest;
+};
+
 // ─── BLOOD PRESSURE ───────────────────────────────────────
 
 // GET /api/delete/blood-pressure
 router.get('/blood-pressure', protect, async (req, res) => {
   try {
     const { data } = await axios.get(`${DOTNET}/api/Users/measurements/BloodPressure`, h(getToken(req)));
-    res.status(200).json(data);
+    res.status(200).json(data.map(cleanMeasurement));
   } catch (error) { err(res, error); }
 });
 
@@ -68,7 +74,7 @@ router.delete('/:id', protect, async (req, res) => {
 router.get('/diabetes', protect, async (req, res) => {
   try {
     const { data } = await axios.get(`${DOTNET}/api/Users/measurements/Diabetes`, h(getToken(req)));
-    res.status(200).json(data);
+    res.status(200).json(data.map(cleanMeasurement));
   } catch (error) { err(res, error); }
 });
 
@@ -93,12 +99,12 @@ router.post('/diabetes', protect, async (req, res) => {
 });
 
 // DELETE /api/measurements/diabetes/:date
-router.delete('/diabetes/:date', protect, async (req, res) => {
-  try {
-    await axios.delete(`${DOTNET}/api/Users/measurements/Diabetes/${req.params.date}`, h(getToken(req)));
-    res.status(200).json({ message: 'Record deleted successfully' });
-  } catch (error) { err(res, error); }
-});
+// router.delete('/diabetes/:date', protect, async (req, res) => {
+//   try {
+//     await axios.delete(`${DOTNET}/api/Users/measurements/Diabetes/${req.params.date}`, h(getToken(req)));
+//     res.status(200).json({ message: 'Record deleted successfully' });
+//   } catch (error) { err(res, error); }
+// });
 
 // ─── BODY TEMPERATURE ─────────────────────────────────────
 
@@ -106,7 +112,7 @@ router.delete('/diabetes/:date', protect, async (req, res) => {
 router.get('/body-temperature', protect, async (req, res) => {
   try {
     const { data } = await axios.get(`${DOTNET}/api/Users/measurements/Temperature`, h(getToken(req)));
-    res.status(200).json(data);
+    res.status(200).json(data.map(cleanMeasurement));
   } catch (error) { err(res, error); }
 });
 

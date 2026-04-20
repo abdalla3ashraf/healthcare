@@ -16,6 +16,7 @@ export const updateProfileDotNet = async (userId, profileData, token) => {
     gender:       profileData.gender,
     city:         profileData.city,
     phoneNumber:  profileData.phoneNumber,
+    //BloodType:    profileData.BloodType
     
   }, authHeader(token));
   return response.data;

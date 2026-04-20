@@ -119,10 +119,15 @@ router.get('/latest-measurements', protect, async (req, res) => {
       axios.get(`${DOTNET}/api/Users/measurements/Diabetes`, h(token)),
       axios.get(`${DOTNET}/api/Users/measurements/Temperature`, h(token)),
     ]);
+    const cleanMeasurement = (m) => {
+      if (!m) return null;
+      const { user, ...rest } = m;
+      return rest;
+    };
     const latest = {
-      bloodPressure: bp?.at(-1) || null,
-      diabetes:      diabetes?.at(-1) || null,
-      bodyTemp:      temp?.at(-1) || null,
+      bloodPressure: cleanMeasurement(bp?.at(-1)) || null,
+      diabetes:      cleanMeasurement(diabetes?.at(-1)) || null,
+      bodyTemp:      cleanMeasurement(temp?.at(-1)) || null,
     };
     res.status(200).json({ hasData: Object.values(latest).some(Boolean), latest });
   } catch (error) { err(res, error); }
