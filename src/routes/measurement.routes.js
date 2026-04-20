@@ -22,19 +22,20 @@ router.get('/blood-pressure', protect, async (req, res) => {
 
 // POST /api/measurements/blood-pressure
 router.post('/blood-pressure', protect, async (req, res) => {
+  
   try {
-    const { date, breakfast, afterLunch, afterDinner, note } = req.body;
+    const { date, breakfast, lunch, dinner, note } = req.body;
     if (!date) return res.status(400).json({ message: 'Date is required' });
 
     const { data } = await axios.post(`${DOTNET}/api/Users/add-measurement`, {
       type:      'BloodPressure',
-      date,
-      breakfast: breakfast || null,
-      lunch:     afterLunch || null,
-      dinner:    afterDinner || null,
-      note:      note || null,
+      date:new Date(date).toISOString(),
+      breakfast: breakfast ,//|| null,
+      lunch:     lunch, //|| null,
+      dinner:    dinner, //|| null,
+      note:      note //|| null,
     }, h(getToken(req)));
-
+ 
     res.status(201).json({ message: 'Blood pressure added successfully', data });
   } catch (error) { err(res, error); }
 });
@@ -74,17 +75,17 @@ router.get('/diabetes', protect, async (req, res) => {
 // POST /api/measurements/diabetes
 router.post('/diabetes', protect, async (req, res) => {
   try {
-    const { date, fasting, beforeLunch, afterDinner, note } = req.body;
+    const { date, fasting, lunch, dinner, note } = req.body;
     if (!date) return res.status(400).json({ message: 'Date is required' });
 
     const { data } = await axios.post(`${DOTNET}/api/Users/add-measurement`, {
       type:       'Diabetes',
-      date,
-      breakfast:  fasting?.toString() || null,
-      lunch:      beforeLunch?.toString() || null,
-      dinner:     afterDinner?.toString() || null,
-      sugarLevel: fasting || 0,
-      note:       note || null,
+      date:new Date(date).toISOString(),
+      breakfast:  fasting?.toString() ,//|| null,
+      lunch:      lunch?.toString() ,//|| null,
+      dinner:     dinner?.toString() ,//|| null,
+      sugarLevel: fasting,// || 0,
+      note:       note //|| null,
     }, h(getToken(req)));
 
     res.status(201).json({ message: 'Diabetes record added successfully', data });
@@ -124,12 +125,12 @@ router.post('/body-temperature', protect, async (req, res) => {
 
     const { data } = await axios.post(`${DOTNET}/api/Users/add-measurement`, {
       type:        'Temperature',
-      date,
-      breakfast:   morning?.toString() || null,
-      lunch:       afternoon?.toString() || null,
-      dinner:      evening?.toString() || null,
-      temperature: morning || 0,
-      note:        note || null,
+      date:new Date(date).toISOString(),
+      breakfast:   morning?.toString() ,//|| null,
+      lunch:       afternoon?.toString() ,//|| null,
+      dinner:      evening?.toString(),// || null,
+      temperature: morning ,//|| 0,
+      note:        note,// || null,
     }, h(getToken(req)));
 
     res.status(201).json({ message: 'Body temperature added successfully', data });
