@@ -15,7 +15,6 @@ import emergencyRoutes   from './routes/emergency.routes.js';
 import aiRoutes          from './routes/ai.routes.js';
 import homeRoutes        from './routes/home.routes.js';
 import commentRoutes     from './routes/comments.routes.js';
-//import { sanitizeResponse } from './middleware/sanitize.middleware.js';
 
 
 

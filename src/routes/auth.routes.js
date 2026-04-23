@@ -4,7 +4,7 @@ import { OAuth2Client } from 'google-auth-library';
 import axios from 'axios';
 
 const router = express.Router();
-console.log("DOTNET inside route:", process.env.DOTNET_API_URL);
+// console.log("DOTNET inside route:", process.env.DOTNET_API_URL);
 
 const DOTNET = process.env.DOTNET_API_URL;
 

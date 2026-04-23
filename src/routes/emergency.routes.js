@@ -1,7 +1,7 @@
 import express from 'express';
 import axios from 'axios';
 import { protect } from '../middleware/auth.middleware.js';
-//import { sendEmergencySMS } from '../services/sms.service.js';
+import { sendEmergencyEmail } from '../services/email.service.js';
 const router = express.Router();
 const DOTNET = process.env.DOTNET_API_URL;
 const AI = process.env.AI_API_URL;
@@ -163,65 +163,16 @@ router.get('/self-care', protect, async (req, res) => {
 
 // POST /api/emergency/send-message
 // POST /api/emergency/send-sms-all
-router.post('/send-sms-all', protect, async (req, res) => {
+router.post('/send-message', protect, async (req, res) => {
   try {
-    const token = getToken(req);
+    const { contactEmail, contactName, patientName } = req.body;
 
-    // 1) هات emergency contacts من .NET
-    const { data } = await axios.get(
-      `${DOTNET}/api/emergency/${req.user.id}`,
-      h(token)
-    );
+    if (!contactEmail || !patientName)
+      return res.status(400).json({ message: 'contactEmail and patientName are required' });
 
-    const contacts = data.contacts;
+    await sendEmergencyEmail(contactEmail, contactName, patientName);
 
-    if (!contacts?.length)
-      return res.status(400).json({ message: 'No contacts found' });
-
-    // 2) ابعت لكل واحد
-    const results = [];
-
-    for (let c of contacts) {
-      if (!c.phone) {
-        results.push({
-          phone: null,
-          success: false,
-          error: "No phone number"
-        });
-        continue;
-      }
-
-      try {
-        const sms = await sendSMS(
-          c.phone,
-          `🚨 Emergency! ${data.fullName} needs help NOW!`
-        );
-
-        results.push({
-          phone: c.phone,
-          success: true,
-          sid: sms.sid,
-          status: sms.status,
-        });
-
-      } catch (error) {
-        results.push({
-          phone: c.phone,
-          success: false,
-          error: error.message,
-        });
-      }
-    }
-
-    // 3) response محترم
-    res.status(200).json({
-      message: "SMS process completed",
-      total: contacts.length,
-      successCount: results.filter(r => r.success).length,
-      failedCount: results.filter(r => !r.success).length,
-      results,
-    });
-
+    res.status(200).json({ message: 'Email sent successfully' });
   } catch (error) {
     err(res, error);
   }

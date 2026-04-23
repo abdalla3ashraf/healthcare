@@ -106,7 +106,7 @@ router.post('/diabetes', protect, async (req, res) => {
 //   } catch (error) { err(res, error); }
 // });
 
-// ─── BODY TEMPERATURE ─────────────────────────────────────
+// ─── BODY TEMPERATURE 
 
 // GET /api/measurements/body-temperature
 router.get('/body-temperature', protect, async (req, res) => {
