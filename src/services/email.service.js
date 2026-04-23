@@ -10,12 +10,12 @@ const transporter = nodemailer.createTransport({
 
 export const sendEmail = async (toEmail, subject, message) => {
   try {
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to:   toEmail,
-      subject,
-      text: message,
-    });
+   await transporter.sendMail({
+  from: '"Healthcare App" <' + process.env.EMAIL_USER + '>',
+  to:   toEmail,
+  subject,
+  text: message,
+});
     console.log(` Email sent to ${toEmail}`);
   } catch (error) {
     console.error(` Email failed: ${error.message}`);
