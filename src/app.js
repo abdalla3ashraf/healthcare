@@ -33,7 +33,6 @@ app.use('/api/emergency',    emergencyRoutes);
 app.use('/api/ai',           aiRoutes);
 app.use('/api/home',         homeRoutes);
 app.use('/api/comments',     commentRoutes);
-
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
@@ -47,7 +46,7 @@ app.get('/api/health', (req, res) => {
 // });
 
 app.use((req, res) => {
-  res.status(404).json({ message: `Route ${req.method} ${req.url} not found` });
+  res.status(404).json({ message: `Healthcare App is running` });
 });
 
 //   Global Error Handler 

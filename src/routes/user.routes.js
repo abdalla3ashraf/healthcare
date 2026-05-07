@@ -64,9 +64,9 @@ const { emailAddress, nationalId, birthDate, city, gender, phoneNumber ,} = req.
 //     });
 //   }
   }catch (error) {
-  console.log("🔥 DOTNET ERROR FULL:", error.response?.data);
-  console.log("🔥 STATUS:", error.response?.status);
-  console.log("🔥 SENT BODY:", error.config?.data);
+  console.log(" DOTNET ERROR FULL:", error.response?.data);
+  console.log(" STATUS:", error.response?.status);
+  console.log("SENT BODY:", error.config?.data);
 
   return res.status(error.response?.status || 500).json({
     message: error.response?.data || error.message
