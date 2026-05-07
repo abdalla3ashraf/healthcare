@@ -25,11 +25,14 @@ const err = (res, error) => {
 router.post('/register', async (req, res) => {
   try {
     const { fullName, email, password, confirmPassword } = req.body;
+    if (!fullName || !email || !password || !confirmPassword)
+      return res.status(400).json({ message: 'All fields are required' });
+    if (password !== confirmPassword)
+      return res.status(400).json({ message: 'Passwords do not match' });
+    if (password.length < 8)
+      return res.status(400).json({ message: 'Password must be at least 8 characters' });
 
-    const url = `${DOTNET}/api/Users/register`;
-    console.log("FINAL URL:", url);
-
-    const { data: user } = await axios.post(url, {
+    const { data: user } = await axios.post(`${DOTNET}/api/Users/register`, {
       fullName,
       emailAddress: email,
       password,
@@ -37,171 +40,128 @@ router.post('/register', async (req, res) => {
 
     const token = generateToken(user);
     res.status(201).json({ message: 'Account created successfully', token, user });
-
-  } catch (error) {
-    console.log("ERROR FULL:", error); // مهم ده كمان
-    err(res, error);
-  }
-})
+  } catch (error) { err(res, error); }
+});
 
 
 // POST /api/auth/login
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password, rememberMe } = req.body;
+
+     const response = await axios.post(`${DOTNET}/api/Users/login`, {
+      emailAddress: email,
+      password,
+        });
+       const data = response.data; 
+
+        const token = data.token;
+        res.status(200).json({
+      message: data.message,
+      token
+       });
+       } catch (error) {
+    err(res, error);
+      }
+});
+
+// POST /api/auth/google
+
+// router.post('/google', async (req, res) => {
+//   try {
+
+//     console.log(req.body);
+
+//     const { token: googleToken } = req.body;
+
+//     if (!googleToken) {
+//       return res.status(400).json({
+//         message: 'No token provided'
+//       });
+//     }
+
+//     const client = new OAuth2Client(
+//       process.env.GOOGLE_CLIENT_ID
+//     );
+
+//     await client.verifyIdToken({
+//       idToken: googleToken,
+//       audience: process.env.GOOGLE_CLIENT_ID,
+//     });
+
+//     // send to .NET
+//     const { data: user } = await axios.post(
+//       `${DOTNET}/api/Users/social-login`,
+//       {
+//         provider: 'Google',
+//         token: googleToken,
+//       }
+//     );
+
+//     const jwtToken = generateToken(user);
+
+//     return res.status(200).json({
+//       message: 'Google login successful',
+//       token: jwtToken,
+//       user
+//     });
+
+//   } catch (error) {
+
+//     console.error('GOOGLE ERROR FULL:', error);
+
+//     return res.status(500).json({
+//       message: 'Google auth failed',
+//       error: error.response?.data || error.message
+//     });
+
+//   }
+// });
 router.post('/google', async (req, res) => {
   try {
+    const { token: googleToken } = req.body;
 
-    const { token } = req.body;
+    if (!googleToken)
+      return res.status(400).json({ message: 'No token provided' });
 
-    if (!token) {
-      return res.status(400).json({
-        message: 'Google token is required'
+    // لو id_token بيبدأ بـ eyJ
+    if (googleToken.startsWith('eyJ')) {
+      const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+      const ticket = await client.verifyIdToken({
+        idToken: googleToken,
+        audience: process.env.GOOGLE_CLIENT_ID,
       });
+      ticket.getPayload();
+    } else {
+      // access_token — تحقق من Google
+      await axios.get(
+        'https://www.googleapis.com/oauth2/v2/userinfo',
+        { headers: { Authorization: `Bearer ${googleToken}` } }
+      );
     }
 
-    // verify google token
-    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
-    await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
+    // بعت للـ .NET
+    const { data: user } = await axios.post(`${DOTNET}/api/Users/social-login`, {
+      provider: 'Google',
+      token: googleToken,
     });
 
-    // send token to .NET
-    const { data: user } = await axios.post(
-      `${DOTNET}/api/Users/social-login`,
-      {
-        provider: 'Google',
-        token: token
-      }
-    );
-
-    // generate JWT
     const jwtToken = generateToken(user);
-
-    return res.status(200).json({
-      message: 'Google login successful',
-      token: jwtToken,
-      user
-    });
+    res.status(200).json({ message: 'Google login successful', token: jwtToken, user });
 
   } catch (error) {
-
-    console.error(
-      'GOOGLE LOGIN ERROR:',
-      error.response?.data || error.message
-    );
-
-    return res.status(500).json({
+    console.error('Google error:', error.message);
+    res.status(500).json({
       message: 'Google authentication failed',
       error: error.response?.data || error.message
     });
-
   }
 });
-// router.post('/login', async (req, res) => {
-//   try {
-//     const { email, password, rememberMe } = req.body;
-//     if (!email || !password)
-//       return res.status(400).json({ message: 'Email and password are required' });
-
-//     const { data: user } = await axios.post(`${DOTNET}/api/Users/login`, {
-//       emailAddress: email,
-//       password,
-//     });
-
-//      //const token = generateToken(user, rememberMe);
-     
-//     const token = data.token;
-    
-
-// res.json({
-//   message: data.message,
-//   token
-// });
-//     res.status(200).json({ message: 'Login successful', token, user });
-//   } catch (error) { err(res, error); }
-// });
-
-// POST /api/auth/google
 
 
 
-// POST /api/auth/google
-// router.post('/google', async (req, res) => {
-//   try {
-//     const { googleToken, accessToken } = req.body;
-//     const token = googleToken || accessToken;
-    
-//     if (!token) return res.status(400).json({ message: 'No token provided' });
 
-//     // جيب بيانات اليوزر من Google بالـ access token
-//     const { data: googleUser } = await axios.get(
-//       `https://www.googleapis.com/oauth2/v2/userinfo`,
-//       { headers: { Authorization: `Bearer ${token}` } }
-//     );
 
-//     const { email, name, picture } = googleUser;
-
-//     // بعت للـ .NET
-//     const { data: user } = await axios.post(`${DOTNET}/api/Users/social-login`, {
-//       provider: 'Google',
-//       token: token,
-//     });
-
-//     const jwtToken = generateToken(user);
-//     res.status(200).json({ message: 'Google login successful', token: jwtToken, user });
-
-//   } catch (error) { err(res, error); }
-// });
-router.post('/google', async (req, res) => {
-  try {
-
-    console.log(req.body);
-
-    const { token: googleToken } = req.body;
-
-    if (!googleToken) {
-      return res.status(400).json({
-        message: 'No token provided'
-      });
-    }
-
-    const client = new OAuth2Client(
-      process.env.GOOGLE_CLIENT_ID
-    );
-
-    await client.verifyIdToken({
-      idToken: googleToken,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-
-    // send to .NET
-    const { data: user } = await axios.post(
-      `${DOTNET}/api/Users/social-login`,
-      {
-        provider: 'Google',
-        token: googleToken,
-      }
-    );
-
-    const jwtToken = generateToken(user);
-
-    return res.status(200).json({
-      message: 'Google login successful',
-      token: jwtToken,
-      user
-    });
-
-  } catch (error) {
-
-    console.error('GOOGLE ERROR FULL:', error);
-
-    return res.status(500).json({
-      message: 'Google auth failed',
-      error: error.response?.data || error.message
-    });
-
-  }
-});
 
 // POST /api/auth/facebook
 router.post('/facebook', async (req, res) => {
