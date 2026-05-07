@@ -33,20 +33,20 @@ app.use('/api/emergency',    emergencyRoutes);
 app.use('/api/ai',           aiRoutes);
 app.use('/api/home',         homeRoutes);
 app.use('/api/comments',     commentRoutes);
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    message: 'Healthcare API is running 🚀',
-    timestamp: new Date().toISOString(),
-  });
-});
-// app.use((req, res, next) => {
-//   console.log("الطلب كامل هو:", req.originalUrl);
-//   next();
+// app.get('/api/health', (req, res) => {
+//   res.status(200).json({
+//     status: 'OK',                                                      
+//     message: 'Healthcare API is running ',
+//     timestamp: new Date().toISOString(),
+//   });
 // });
 
+app.get("/", (req, res) => {
+  res.send("Healthcare API is running ");
+});
+
 app.use((req, res) => {
-  res.status(404).json({ message: `Healthcare App is running` });
+  res.status(404).json({ message: `Route ${req.method} ${req.url} not found` });
 });
 
 //   Global Error Handler 
@@ -54,4 +54,5 @@ app.use((req, res) => {
 //   console.error(err.stack);
 //   res.status(500).json({ message: 'Something went wrong on our side!' });
 // });
+
 export default app;
