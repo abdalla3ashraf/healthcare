@@ -66,20 +66,32 @@ router.patch('/phone', protect, async (req, res) => {
 // POST /api/emergency/contacts
 router.post('/contacts', protect, async (req, res) => {
   try {
-    const { name, phone, relation } = req.body;
-    if (!name || !phone || !relation)
+    const { name, phoneNumber,email, relation } = req.body;
+    if (!name || !phoneNumber || !relation)
       return res.status(400).json({ message: 'Name, phone, and relation are required' });
-    if (!/^01[0-2,5]{1}[0-9]{8}$/.test(phone))
-      return res.status(400).json({ message: 'Invalid Egyptian phone number' });
-    const { data } = await axios.post(`${DOTNET}/api/emergency/${req.user.id}/contacts`, { name, phone, relation }, h(getToken(req)));
+    // if (!/^01[0-2,5]{1}[0-9]{8}$/.test(phone))
+    //   return res.status(400).json({ message: 'Invalid Egyptian phone number' });
+    const { data } = await axios.post(`${DOTNET}/api/Users/add-emergency-contact`, { name, phoneNumber,email, relation }, h(getToken(req)));
     res.status(201).json({ message: 'Contact added successfully', data });
+  } catch (error) { err(res, error); }
+});
+
+
+// GET /api/emergency/contacts
+router.get('/contacts', protect, async (req, res) => {
+  try {
+    const { data } = await axios.get(
+      `${DOTNET}/api/Users/my-emergency-contacts`,
+      h(getToken(req))
+    );
+    res.status(200).json(data);
   } catch (error) { err(res, error); }
 });
 
 // DELETE /api/emergency/contacts/:id
 router.delete('/contacts/:id', protect, async (req, res) => {
   try {
-    await axios.delete(`${DOTNET}/api/emergency/${req.user.id}/contacts/${req.params.id}`, h(getToken(req)));
+    await axios.delete(`${DOTNET}/api/Users/delete-emergency-contact/${req.params.id}`, h(getToken(req)));
     res.status(200).json({ message: 'Contact deleted successfully' });
   } catch (error) { err(res, error); }
 });
