@@ -100,10 +100,38 @@ router.delete('/contacts/:id', protect, async (req, res) => {
 router.get('/hospitals', protect, async (req, res) => {
   try {
     const { lat, lng } = req.query;
-    if (!lat || !lng) return res.status(400).json({ message: 'lat and lng are required' });
-    const { data } = await axios.get(`${DOTNET}/api/emergency/hospitals/nearest?lat=${lat}&lng=${lng}`, h(getToken(req)));
-    res.status(200).json(data);
-  } catch (error) { err(res, error); }
+
+    if (!lat || !lng)
+      return res.status(400).json({ message: 'lat and lng are required' });
+
+    const query = `[out:json];node["amenity"="hospital"](around:10000,${lat},${lng});out body 5;`;
+
+    const { data } = await axios.get(
+  `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`,
+  {
+    headers: {
+      'Accept': 'application/json',
+      'User-Agent': 'HealthcareApp/1.0',
+    }
+  }
+);
+
+    const hospitals = data.elements.map((h) => ({
+      name:    h.tags?.name || 'Unknown Hospital',
+      address: h.tags?.['addr:street'] || h.tags?.['addr:city'] || 'No address',
+      lat:     h.lat,
+      lng:     h.lon,
+      phone:   h.tags?.phone || null,
+    }));
+
+    res.status(200).json({ hospitals });
+
+ } catch (error) {
+    console.error('Hospitals error:', error.message);
+    console.error('Hospitals error response:', error.response?.data);
+    console.error('Hospitals error status:', error.response?.status);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
 });
 
 // GET /api/emergency/risk
