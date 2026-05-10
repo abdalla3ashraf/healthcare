@@ -116,13 +116,15 @@ router.get('/hospitals', protect, async (req, res) => {
   }
 );
 
-    const hospitals = data.elements.map((h) => ({
-      name:    h.tags?.name || 'Unknown Hospital',
-      address: h.tags?.['addr:street'] || h.tags?.['addr:city'] || 'No address',
-      lat:     h.lat,
-      lng:     h.lon,
-      phone:   h.tags?.phone || null,
-    }));
+   const hospitals = data.elements.map((h) => ({
+  name:       h.tags?.name || 'Unknown Hospital',
+  address:    h.tags?.['addr:street'] || h.tags?.['addr:full'] || h.tags?.['addr:city'] || 'Cairo, Egypt',
+  lat:        h.lat,
+  lng:        h.lon,
+  phone:      h.tags?.phone || h.tags?.['contact:phone'] || null,
+  mapsLink:   `https://www.google.com/maps?q=${h.lat},${h.lon}`,
+  distance:   null,
+}));
 
     res.status(200).json({ hospitals });
 
