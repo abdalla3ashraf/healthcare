@@ -66,12 +66,36 @@ router.patch('/phone', protect, async (req, res) => {
 // POST /api/emergency/contacts
 router.post('/contacts', protect, async (req, res) => {
   try {
-    const { name, phoneNumber,email, relation } = req.body;
+    const { name, phoneNumber, email, relation } = req.body;
+
     if (!name || !phoneNumber || !relation)
-      return res.status(400).json({ message: 'Name, phone, and relation are required' });
-    // if (!/^01[0-2,5]{1}[0-9]{8}$/.test(phone))
-    //   return res.status(400).json({ message: 'Invalid Egyptian phone number' });
-    const { data } = await axios.post(`${DOTNET}/api/Users/add-emergency-contact`, { name, phoneNumber,email, relation }, h(getToken(req)));
+      return res.status(400).json({ message: 'Name, phoneNumber, and relation are required' });
+if (phoneNumber.length >11)
+        return res.status(400).json({ message: 'phoneNumber must be at least 11 characters' });
+
+    // جيب الـ contacts الموجودة الأول
+    const { data: existingContacts } = await axios.get(
+      `${DOTNET}/api/Users/my-emergency-contacts`,
+      h(getToken(req))
+    );
+
+    // تحقق لو الرقم موجود بالفعل
+    const duplicate = existingContacts.find(
+      (c) => c.phoneNumber === phoneNumber
+    );
+
+    if (duplicate)
+      return res.status(400).json({ 
+        message: `الرقم ${phoneNumber} مضاف بالفعل باسم ${duplicate.name}` 
+      });
+
+    // لو مش موجود — أضفه
+    const { data } = await axios.post(
+      `${DOTNET}/api/Users/add-emergency-contact`,
+      { name, phoneNumber, email, relation },
+      h(getToken(req))
+    );
+
     res.status(201).json({ message: 'Contact added successfully', data });
   } catch (error) { err(res, error); }
 });

@@ -25,12 +25,22 @@ const err = (res, error) => {
 router.post('/register', async (req, res) => {
   try {
     const { fullName, email, password, confirmPassword } = req.body;
+
     if (!fullName || !email || !password || !confirmPassword)
       return res.status(400).json({ message: 'All fields are required' });
     if (password !== confirmPassword)
       return res.status(400).json({ message: 'Passwords do not match' });
     if (password.length < 8)
       return res.status(400).json({ message: 'Password must be at least 8 characters' });
+
+    // جيب كل اليوزرز من الدوت نت وشوف لو الإيميل موجود
+    const { data: users } = await axios.get(`${DOTNET}/api/Users`);
+    const emailExists = users.some(
+      (u) => u.emailAddress?.toLowerCase() === email.toLowerCase()
+    );
+
+    if (emailExists)
+      return res.status(400).json({ message: 'An account with this email already exists' });
 
     const { data: user } = await axios.post(`${DOTNET}/api/Users/register`, {
       fullName,
@@ -40,7 +50,10 @@ router.post('/register', async (req, res) => {
 
     const token = generateToken(user);
     res.status(201).json({ message: 'Account created successfully', token, user });
-  } catch (error) { err(res, error); }
+
+  } catch (error) {
+    err(res, error);
+  }
 });
 
 
