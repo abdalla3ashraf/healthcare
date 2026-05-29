@@ -57,10 +57,10 @@ if (code !== 0) {
 };
 
 /// code 7oda
-router.post('/chat', protect, async (req, res) => {
+router.post('/predict', protect, async (req, res) => {
   try {
     const { data: aiResponse } = await axios.post(
-  'https://pulse-key-ai-model-g66v-e87rhcise.vercel.app/predict',
+  'https://fearless-solace-production-cf1a.up.railway.app/predict',
   {
     age:           req.body.age          || 30,
     gender:        req.body.gender       || 1,
@@ -115,7 +115,7 @@ router.post('/chat-with-context', protect, async (req, res) => {
       return res.status(400).json({ message: 'Message is required' });
 
     const { data: aiResponse } = await axios.post(
-      'https://pulse-key-ai-model-g66v-e87rhcise.vercel.app/predict',
+      'https://fearless-solace-production-cf1a.up.railway.app/chat',
       {
         message,
         report_context,

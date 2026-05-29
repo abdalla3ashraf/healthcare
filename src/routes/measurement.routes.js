@@ -16,9 +16,9 @@ const cleanMeasurement = (m) => {
   return rest;
 };
 
-// ─── BLOOD PRESSURE ───────────────────────────────────────
+// ─── BLOOD PRESSURE ────────────
 
-// GET /api/delete/blood-pressure
+
 router.get('/blood-pressure', protect, async (req, res) => {
   try {
     const { data } = await axios.get(`${DOTNET}/api/Users/measurements/BloodPressure`, h(getToken(req)));

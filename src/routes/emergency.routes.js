@@ -131,31 +131,50 @@ router.get('/hospitals', protect, async (req, res) => {
     const query = `[out:json];node["amenity"="hospital"](around:10000,${lat},${lng});out body 5;`;
 
     const { data } = await axios.get(
-  `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`,
-  {
-    headers: {
-      'Accept': 'application/json',
-      'User-Agent': 'HealthcareApp/1.0',
-    }
-  }
-);
+      `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`,
+      {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'HealthcareApp/1.0',
+        }
+      }
+    );
 
-   const hospitals = data.elements.map((h) => ({
-  name:       h.tags?.name || 'Unknown Hospital',
-  address:    h.tags?.['addr:street'] || h.tags?.['addr:full'] || h.tags?.['addr:city'] || 'Cairo, Egypt',
-  lat:        h.lat,
-  lng:        h.lon,
-  phone:      h.tags?.phone || h.tags?.['contact:phone'] || null,
-  mapsLink:   `https://www.google.com/maps?q=${h.lat},${h.lon}`,
-  distance:   null,
-}));
+    // فانكشن بتجيب العنوان من الإحداثيات
+    const getAddressFromCoords = async (lat, lng) => {
+      try {
+        const { data } = await axios.get(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+          { headers: { 'User-Agent': 'HealthcareApp/1.0' } }
+        );
+        return data.address?.suburb ||
+               data.address?.city ||
+               data.address?.town ||
+               data.address?.state ||
+               'Unknown';
+      } catch {
+        return 'Unknown';
+      }
+    };
+
+    const hospitals = await Promise.all(
+      data.elements.map(async (h) => ({
+        name:     h.tags?.name || 'Unknown Hospital',
+        address:  h.tags?.['addr:street'] ||
+                  h.tags?.['addr:full'] ||
+                  h.tags?.['addr:city'] ||
+                  await getAddressFromCoords(h.lat, h.lon),
+        lat:      h.lat,
+        lng:      h.lon,
+        phone:    h.tags?.phone || h.tags?.['contact:phone'] || null,
+        mapsLink: `https://www.google.com/maps?q=${h.lat},${h.lon}`,
+      }))
+    );
 
     res.status(200).json({ hospitals });
 
- } catch (error) {
+  } catch (error) {
     console.error('Hospitals error:', error.message);
-    console.error('Hospitals error response:', error.response?.data);
-    console.error('Hospitals error status:', error.response?.status);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
