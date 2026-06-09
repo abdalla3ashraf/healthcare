@@ -59,43 +59,36 @@ if (code !== 0) {
 /// code 7oda
 router.post('/predict', protect, async (req, res) => {
   try {
+    // الفرونت بيبعت جوا data أو مباشرة
+    const body = req.body.data || req.body;
+
     const { data: aiResponse } = await axios.post(
-  'https://fearless-solace-production-cf1a.up.railway.app/predict',
-  {
-    age:           req.body.age          || 30,
-    gender:        req.body.gender       || 1,
-    diabetes:      req.body.diabetes     || 0,
-    hypertension:  req.body.hypertension || 0,
-    heart_disease: req.body.heart_disease|| 0,
-    glucose_mg_dl: req.body.glucose      || 90,
-    systolic_bp:   req.body.systolic_bp  || 120,
-    diastolic_bp:  req.body.diastolic_bp || 80,
-    heart_rate:    req.body.heart_rate   || 75,
-    temperature_c: req.body.temperature  || 36.5,
-    spo2:          req.body.spo2         || 98,
-  },
-  {
-    headers: {
-      'Content-Type': 'application/json',
-      'ngrok-skip-browser-warning': 'true'
-    }
-  }
-);
-
-    const replies = {
-      0: 'Low risk. Your vitals appear normal. Maintain healthy habits.',
-      1: 'Medium risk. Some vitals are slightly abnormal. Monitor closely.',
-      2: 'High risk. Consult your doctor soon.',
-      3: 'Critical risk. Seek immediate medical attention or call 123!',
-    };
-
-    const risk_level = aiResponse.risk_level ?? aiResponse.prediction ?? 0;
+      'https://fearless-solace-production-cf1a.up.railway.app/predict',
+      {
+        // بعت للـ Railway بنفس الـ format اللي بيقبله
+        data: {
+          age:           body.age           || 30,
+          gender:        body.gender        || 1,
+          diabetes:      body.diabetes      || 0,
+          hypertension:  body.hypertension  || 0,
+          heart_disease: body.heart_disease || 0,
+          glucose_mg_dl: body.glucose_mg_dl || body.glucose || 90,
+          systolic_bp:   body.systolic_bp   || 120,
+          diastolic_bp:  body.diastolic_bp  || 80,
+          heart_rate:    body.heart_rate    || 75,
+          temperature_c: body.temperature_c || body.temperature || 36.5,
+          spo2:          body.spo2          || 98,
+        }
+      },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
 
     res.status(200).json({
-  reply:      aiResponse.reply,
-  risk_level: aiResponse.risk_level,
-  timestamp:  new Date().toISOString(),
-});
+      reply:      aiResponse.label || aiResponse.reply,
+      risk_level: aiResponse.risk_level,
+      status:     aiResponse.status,
+      timestamp:  new Date().toISOString(),
+    });
 
   } catch (error) {
     console.error('AI Error:', error.message);
