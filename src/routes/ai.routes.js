@@ -104,14 +104,30 @@ router.post('/chat-with-context', protect, async (req, res) => {
   try {
     const { message, report_context } = req.body;
 
-    if (!message)
-      return res.status(400).json({ message: 'Message is required' });
+    if (!message) {
+      return res.status(400).json({
+        message: 'Message is required'
+      });
+    }
+
+    console.log(
+      'Sending to Railway:',
+      JSON.stringify(
+        {
+          message,
+          report_context
+        },
+        null,
+        2
+      )
+    );
 
     const { data: aiResponse } = await axios.post(
       'https://fearless-solace-production-cf1a.up.railway.app/chat',
       {
         message,
-        report_context,
+        report: report_context, // مهم
+        report_context: report_context // مهم
       },
       {
         headers: {
@@ -120,14 +136,30 @@ router.post('/chat-with-context', protect, async (req, res) => {
       }
     );
 
-    res.status(200).json({
-      reply:      aiResponse.reply || aiResponse.response || aiResponse.message,
-      timestamp:  new Date().toISOString(),
+    console.log(
+      'Railway response:',
+      JSON.stringify(aiResponse, null, 2)
+    );
+
+    return res.status(200).json({
+      reply:
+        aiResponse.reply ||
+        aiResponse.response ||
+        aiResponse.message,
+      timestamp: new Date().toISOString()
     });
 
   } catch (error) {
-    console.error('AI Chat Error:', error.message);
-    res.status(500).json({ message: 'AI service error', error: error.message });
+
+    console.error(
+      'AI Chat Error:',
+      error.response?.data || error.message
+    );
+
+    return res.status(500).json({
+      message: 'AI service error',
+      error: error.response?.data || error.message
+    });
   }
 });
 
